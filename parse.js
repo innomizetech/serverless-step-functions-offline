@@ -17,6 +17,10 @@ module.exports = {
             'serverless.js',
         ];
 
+        if (this.options.config) {
+            manifestFilenames.push(this.options.config);
+        }
+
         const manifestFilename = manifestFilenames.map((filename) => path.join(serverlessPath, filename))
             .find((filename) => this.serverless.utils.fileExistsSync(filename));
 
@@ -28,7 +32,9 @@ module.exports = {
             return Promise.resolve(require(manifestFilename));
         }
 
-        return this.serverless.yamlParser.parse(manifestFilename);
+        return this.serverless.yamlParser
+            .parse(manifestFilename)
+            .then(serverlessFileParam => this.serverless.variables.populateObject(serverlessFileParam));
     },
 
     parseConfig() {
@@ -37,11 +43,11 @@ module.exports = {
                 this.serverless.service.stepFunctions = {};
                 this.serverless.service.stepFunctions.stateMachines
                     = serverlessFileParam.stepFunctions
-                && serverlessFileParam.stepFunctions.stateMachines
+                        && serverlessFileParam.stepFunctions.stateMachines
                         ? serverlessFileParam.stepFunctions.stateMachines : {};
                 this.serverless.service.stepFunctions.activities
                     = serverlessFileParam.stepFunctions
-                && serverlessFileParam.stepFunctions.activities
+                        && serverlessFileParam.stepFunctions.activities
                         ? serverlessFileParam.stepFunctions.activities : [];
 
                 if (!this.serverless.pluginManager.cliOptions.stage) {
